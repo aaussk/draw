@@ -1,0 +1,83 @@
+import pygame
+import sys
+import math
+
+# Initialize Pygame
+pygame.init()
+
+# Set up display
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Tracing Circle Drawing Game")
+
+# Colors
+white = (255, 255, 255)
+black = (0, 0, 0)
+
+# Target dot position
+target_dot = (width // 2, height // 2)
+target_radius = 20
+
+# Game variables
+drawing = False
+accuracy_threshold = 10  # Adjust this value for desired accuracy
+drawn_points = []
+game_started = False
+
+# Fonts
+font = pygame.font.Font(None, 36)
+
+def draw_start_button():
+    pygame.draw.rect(screen, black, (width // 2 - 75, height // 2 - 25, 150, 50))
+    start_text = font.render("Start", True, white)
+    screen.blit(start_text, (width // 2 - 30, height // 2 - 15))
+
+def start_game():
+    global game_started
+    game_started = True
+    pygame.draw.circle(screen, white, target_dot, target_radius)
+
+# Main game loop
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if not game_started:
+                if event.button == 1 and width // 2 - 75 < event.pos[0] < width // 2 + 75 and height // 2 - 25 < event.pos[1] < height // 2 + 25:
+                    start_game()
+            elif game_started:
+                if event.button == 1:
+                    drawing = True
+                    drawn_points = [event.pos]  # Start with the initial mouse position
+        elif event.type == pygame.MOUSEMOTION and drawing and game_started:
+            # Clear the screen
+            screen.fill(black)
+
+            # Redraw the target dot
+            pygame.draw.circle(screen, white, target_dot, target_radius)
+
+            # Update the drawn points
+            drawn_points.append(event.pos)
+
+            # Draw the traced circle if there are at least two points
+            if len(drawn_points) >= 2:
+                pygame.draw.lines(screen, white, False, drawn_points, 2)
+
+        elif event.type == pygame.MOUSEBUTTONUP and drawing and game_started:
+            drawing = False
+
+            # Calculate accuracy
+            distance = math.hypot(drawn_points[-1][0] - target_dot[0], drawn_points[-1][1] - target_dot[1])
+            accuracy = abs(target_radius - distance)
+
+            # Display accuracy
+            accuracy_text = font.render(f"Accuracy: {accuracy:.2f} pixels", True, white)
+            screen.blit(accuracy_text, (width // 2 - 150, height // 2 + 50))
+
+    if not game_started:
+        draw_start_button()
+
+    pygame.display.flip()
+    pygame.time.Clock().tick(60)
